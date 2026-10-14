@@ -1,4 +1,5 @@
 import express from "express";
+import verifyToken from "../middlewares/verifyToken.js";
 import {
   createPost,
   deletePost,
@@ -17,9 +18,9 @@ router.get("/", getAllPosts);
 router.get("/:id", getPost);
 router.get("/replay/:id", getPostReplay);
 router.get("/user/:id", getPostByUser);
-router.put("/uploadPostImage", upload.single("PostImage"), updatePost);
-router.delete("/:id", deletePost);
-router.post("/:id", upload.single("PostImage"), createPost);
-router.post("/replay/:id", upload.single("PostImage"), createPostReplay);
+router.put("/uploadPostImage",verifyToken, upload.single("PostImage"), updatePost);
+router.post("/:id", upload.single("PostImage"),verifyToken, createPost);
+router.post("/replay/:id", upload.single("PostImage"),verifyToken, createPostReplay);
+router.delete("/:id",verifyToken, deletePost);
 
 export default router;

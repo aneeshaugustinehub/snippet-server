@@ -1,5 +1,8 @@
 import express from "express";
+import validateLogin from "../middlewares/validateLogin.js";
+import verifyToken from "../middlewares/verifyToken.js";
 import {
+  getMe,
   createUser,
   updateUser,
   deleteUser,
@@ -7,16 +10,19 @@ import {
   bookmarkPosts,
   getUser,
   getUsers,
+  loginUser,
 } from "../controllers/userController.js";
 import upload from "../middlewares/upload.js";
 
 const router = express.Router();
+router.get("/getMe", verifyToken, getMe);
+router.post("/register", createUser);
+router.post("/login", validateLogin, loginUser);
 router.get("/:id", getUser);
 router.get("/", getUsers);
 router.get("/id/:id", getUserById);
-router.post("/", createUser);
-router.put("/bookmark/:id", bookmarkPosts);
-router.delete("/:id", deleteUser);
+router.put("/bookmark/:id", verifyToken, bookmarkPosts);
+router.delete("/:id", verifyToken, deleteUser);
 router.put(
   "/:id",
   upload.fields([

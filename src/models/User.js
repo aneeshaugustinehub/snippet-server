@@ -30,7 +30,8 @@ const userSchema = new Schema(
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Posts" }],
     roles: { type: [String], default: ["user"] },
-    token: { type: String, required: true },
+    password: { type: String, required: true },
+    token: { type: String, required: false },
   },
   {
     timestamps: true,
