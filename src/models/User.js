@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import validator from "validator";
 const { Schema } = mongoose;
 
 // 1. Define the Schema
@@ -12,12 +13,11 @@ const userSchema = new Schema(
     bio: { type: String, maxlength: 160 },
     website: {
       type: String,
-      trim: true,
-      lowercase: true,
-      match: [
-        /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
-        "Please fill a valid URL address",
-      ],
+      validate: {
+        validator: (value) =>
+          validator.isURL(value, { require_protocol: false }),
+        message: "Please fill a valid URL address",
+      },
     },
     location: { type: String, trim: true },
     dob: { type: Date, required: true },
