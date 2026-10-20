@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 const verifyToken = async (req, res, next) => {
-  console.log("auth header:", req.headers.authorization);
+  // console.log("auth header:", req.headers.authorization);
   const header = req.headers.authorization;
 
   if (!header?.startsWith("Bearer ")) {
@@ -14,8 +14,6 @@ const verifyToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select("-password");
-    console.log("decoded:", decoded);
-    console.log("user found:", !!user);
 
     if (!user) {
       return res.status(401).json({ message: "Not authenticated" });

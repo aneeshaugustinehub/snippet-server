@@ -12,10 +12,10 @@ const validateLogin = async (req, res, next) => {
     let user; 
 
     if (isEmail) {
-      console.log("Logging in with email:", userId);
+      console.log("Logging in with email:");
       user = await User.findOne({ email: userId });
     } else {
-      console.log("Logging in with userId:", userId);
+      console.log("Logging in with userId:");
       user = await User.findOne({ userId: userId });
     }
     if (!user) {

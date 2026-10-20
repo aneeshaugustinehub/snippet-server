@@ -14,13 +14,13 @@ import upload from "../middlewares/upload.js";
 
 const router = express.Router();
 
+router.post("/",verifyToken, upload.single("PostImage"), createPost);
+router.put("/uploadPostImage",verifyToken, upload.single("PostImage"), updatePost);
+router.post("/replay/", upload.single("PostImage"),verifyToken, createPostReplay);
 router.get("/", getAllPosts);
 router.get("/:id", getPost);
 router.get("/replay/:id", getPostReplay);
 router.get("/user/:id", getPostByUser);
-router.put("/uploadPostImage",verifyToken, upload.single("PostImage"), updatePost);
-router.post("/:id", upload.single("PostImage"),verifyToken, createPost);
-router.post("/replay/:id", upload.single("PostImage"),verifyToken, createPostReplay);
 router.delete("/:id",verifyToken, deletePost);
 
 export default router;

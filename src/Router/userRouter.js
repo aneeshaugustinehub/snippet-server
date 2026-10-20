@@ -23,13 +23,6 @@ router.get("/", getUsers);
 router.get("/id/:id", getUserById);
 router.put("/bookmark/:id", verifyToken, bookmarkPosts);
 router.delete("/:id", verifyToken, deleteUser);
-router.put(
-  "/:id",
-  upload.fields([
-    { name: "profilePic", maxCount: 1 },
-    { name: "bannerPic", maxCount: 1 },
-  ]),
-  updateUser,
-);
+router.put("/",verifyToken,upload.fields([{ name: "profilePic", maxCount: 1 },{ name: "bannerPic", maxCount: 1 },]),updateUser,);
 
 export default router;

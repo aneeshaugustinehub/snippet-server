@@ -4,11 +4,9 @@ import jwt from "jsonwebtoken";
 import cokkieParser from "cookie-parser";
 
 const PUBLIC_FIELDS = "userId username avatar bio createdAt";
-const isOwner = (req) => req.params.id === req.user._id.toString();
 
 export const getMe = (req, res) => {
   const u = req.user; // set by verifyToken
-  console.log(u, "getMe");
 
   res.status(200).json({
     user: {
@@ -34,6 +32,7 @@ export const getMe = (req, res) => {
     },
   });
 };
+
 export async function getUser(req, res) {
   try {
     const id = req.params.id;
@@ -151,12 +150,13 @@ export const loginUser = async (req, res) => {
   }
 };
 export async function updateUser(req, res) {
+  // const isOwner = (req) => req.params.id === req.user._id.toString();
   try {
-    if (!isOwner(req)) {
-      return res
-        .status(403)
-        .json({ message: "You can only edit your own profile" });
-    }
+    // if (!isOwner(req)) {
+    //   return res
+    //     .status(403)
+    //     .json({ message: "You can only edit your own profile" });
+    // }
     const { userId, name, email, bio, location, website, age } = req.body;
     const profileImageUrl = req.files?.profilePic?.[0]?.filename;
     const bannerImageUrl = req.files?.bannerPic?.[0]?.filename;
@@ -175,10 +175,10 @@ export async function updateUser(req, res) {
       ...(profileImageUrl && { profilePic: profileImageUrl }),
       ...(bannerImageUrl && { bannerPic: bannerImageUrl }),
     };
-    console.log(updateFields);
+    // console.log(updateFields);
 
     const updated = await User.findByIdAndUpdate(
-      req.params.id,
+      req.user._id,
       { $set: updateFields },
       { returnDocument: "after", runValidators: true },
     ).select("-password");
@@ -188,6 +188,9 @@ export async function updateUser(req, res) {
     }
     res.status(200).json(updated);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "User already exists" });
+    }
     console.error("error in updateUser", error);
     res.status(500).json({ message: "internal server error" });
   }
