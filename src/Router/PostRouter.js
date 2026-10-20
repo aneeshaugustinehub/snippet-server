@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.post("/",verifyToken, upload.single("PostImage"), createPost);
 router.put("/uploadPostImage",verifyToken, upload.single("PostImage"), updatePost);
-router.post("/replay/", upload.single("PostImage"),verifyToken, createPostReplay);
+router.post("/replay/:id",verifyToken, upload.single("PostImage"), createPostReplay);
 router.get("/", getAllPosts);
 router.get("/:id", getPost);
 router.get("/replay/:id", getPostReplay);

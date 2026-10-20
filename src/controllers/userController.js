@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import hashPassword from "../middlewares/hashPassword.js";
 import jwt from "jsonwebtoken";
 import cokkieParser from "cookie-parser";
+import mongoose from "mongoose";
 
 const PUBLIC_FIELDS = "userId username avatar bio createdAt";
 
@@ -36,7 +37,8 @@ export const getMe = (req, res) => {
 export async function getUser(req, res) {
   try {
     const id = req.params.id;
-    const user = await User.findOne({ userId: id }).select(PUBLIC_FIELDS);
+
+    const user = await User.findOne({ userId: id }).select(PUBLIC_FIELDS); // how add in mongo db schema
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -50,9 +52,16 @@ export async function getUser(req, res) {
   }
 }
 export async function getUserById(req, res) {
+  // console.log("getUserById", req.params.id);
+  const Id = req.params.id;
+  if (!mongoose.isValidObjectId(Id)) {
+    return res.status(400).json({
+      success: false,
+      message: `Invalid user ID '${Id}'.`,
+    });
+  }
   try {
-    const Id = req.params.id;
-    const user = await User.findById(Id);
+    const user = await User.findById(Id).select("-password");
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -61,7 +70,7 @@ export async function getUserById(req, res) {
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("error in getUser", error);
+    console.error("error in getUserById", error);
     res.status(500).json({ message: "internal server error" });
   }
 }
@@ -75,7 +84,7 @@ export async function getUsers(_, res) {
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("error in getUser", error);
+    console.error("error in getUsers", error);
     res.status(500).json({ message: "internal server error" });
   }
 }
@@ -189,7 +198,7 @@ export async function updateUser(req, res) {
     res.status(200).json(updated);
   } catch (error) {
     if (error.code === 11000) {
-      return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({ message: "Username already exists" });
     }
     console.error("error in updateUser", error);
     res.status(500).json({ message: "internal server error" });
@@ -213,7 +222,7 @@ export async function deleteUser(req, res) {
 }
 export async function bookmarkPosts(req, res) {
   try {
-    const userId = req.params.id;
+    const userId = req.user.id;
     const { postId } = req.body;
     const update = { bookmarks: postId };
     const user = await User.findById(userId);

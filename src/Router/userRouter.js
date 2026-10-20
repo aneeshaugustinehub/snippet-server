@@ -21,7 +21,7 @@ router.post("/login", validateLogin, loginUser);
 router.get("/:id", getUser);
 router.get("/", getUsers);
 router.get("/id/:id", getUserById);
-router.put("/bookmark/:id", verifyToken, bookmarkPosts);
+router.put("/bookmark/", verifyToken, bookmarkPosts);
 router.delete("/:id", verifyToken, deleteUser);
 router.put("/",verifyToken,upload.fields([{ name: "profilePic", maxCount: 1 },{ name: "bannerPic", maxCount: 1 },]),updateUser,);
 

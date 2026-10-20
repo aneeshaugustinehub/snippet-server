@@ -18,7 +18,6 @@ const verifyToken = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-
     req.user = user;
     next();
   } catch (error) {

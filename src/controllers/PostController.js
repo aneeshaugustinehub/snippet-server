@@ -47,6 +47,8 @@ export async function getPostByUser(req, res) {
   }
 }
 export async function getPostReplay(req, res) {
+  // console.log("getPostReplay", req.params.id);
+
   try {
     const id = req.params.id;
     const posts = await Posts.find({ replayId: id }).sort({ createdAt: -1 });
@@ -60,21 +62,13 @@ export async function getPostReplay(req, res) {
   }
 }
 
-// Security Note on req.params.id: Pulling the postedBy ID from the URL
-// parameters (e.g., /users/:id/Posts) works, but if you have authentication
-// set up, it is generally safer to pull the ID from the authenticated user's
-// token (often attached as req.user.id by auth middleware). This prevents a
-// user from creating a Post under someone else's ID by just manipulating the
-// URL. If you aren't at the authentication stage yet, your current method is
-// perfectly fine for testing!
-
 export async function createPost(req, res) {
   console.log("createPost");
   try {
-    const postedBy = req.params.id;
-    const { Description, imagePath } = req.body;
-    // console.log(imageUrl,Description,imagePath);
-    // console.log(req.body,"res");
+    const postedBy = req.user._id;
+    const { Description, PostImage } = req.body;
+    // console.log(Description, PostImage, req.formData);
+    // console.log(req.body, req.file, "res");
     let imageUrl = "";
     if (!Description && !req.file) {
       return res
@@ -100,10 +94,12 @@ export async function createPost(req, res) {
 }
 
 export async function createPostReplay(req, res) {
-  console.log("createPostReplay");
+  const postedBy = req.user._id;
+
+  const { replayText, replayImage } = req.body;
+  // console.log("createPostReplay");
   try {
-    const { postedBy, replayText, replayImage } = req.body;
-    console.log(postedBy, replayText, replayImage);
+    // console.log(postedBy, replayText, replayImage);
     let imageUrl = "";
     if (!postedBy) {
       return res.status(400).json({ message: "userid is required" });
@@ -122,7 +118,7 @@ export async function createPostReplay(req, res) {
       description: replayText,
       imagePath: imageUrl,
     });
-    console.log(newPost);
+    // console.log(newPost);
     await newPost.save();
     return res.status(200).json(newPost);
   } catch (error) {
@@ -159,12 +155,19 @@ export async function updatePost(req, res) {
 const uploadsDir = path.join(process.cwd(), "assets/postsImage");
 
 export async function deletePost(req, res) {
-  console.log("deletePost");
   try {
+    const post = await Posts.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+    console.log("deletePost");
+    const isOwner = post.postedBy.equals(req.user._id);
+    if (!isOwner) {
+      return res
+        .status(403)
+        .json({ message: "You can only delete your own post" });
+    }
     const DeletePost = await Posts.findByIdAndDelete(req.params.id);
 
-    if (!DeletePost)
-      return res.status(404).json({ message: "Post not found" });
+    if (!DeletePost) return res.status(404).json({ message: "Post not found" });
 
     if (DeletePost.imagePath) {
       const filename = path.basename(DeletePost.imagePath);
