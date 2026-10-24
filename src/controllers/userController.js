@@ -27,6 +27,7 @@ export const getMe = (req, res) => {
       followers: u.followers,
       following: u.following,
       bookmarks: u.bookmarks,
+      likedPosts: u.likedPosts,
       roles: u.roles,
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,

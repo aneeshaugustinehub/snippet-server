@@ -28,6 +28,7 @@ const userSchema = new Schema(
     noFollowing: { type: Number, default: 0 },
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    likedPosts: [{ type: Schema.Types.ObjectId, ref: "Post", default: [] }],
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Posts" }],
     roles: { type: [String], default: ["user"] },
     password: { type: String, required: true },

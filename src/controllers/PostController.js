@@ -1,5 +1,6 @@
 import { log } from "console";
 import Posts from "../models/Posts.js";
+import Users from "../models/User.js";
 import fs from "node:fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -123,6 +124,40 @@ export async function createPostReplay(req, res) {
     return res.status(200).json(newPost);
   } catch (error) {
     console.error("error in createPost", error);
+    res.status(500).json({ message: "internal server error" });
+  }
+}
+export async function likeUnlikePost(req, res) {
+  console.log("like");
+
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+
+    const post = await Posts.findById(postId);
+    console.log("post", post);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const isLiked = post.likedBy.includes(userId);
+    console.log("isLiked", isLiked);
+    if (isLiked) {
+      await Promise.all([
+        Posts.updateOne({ _id: postId }, { $pull: { likedBy: userId } }),
+        Users.updateOne({ _id: userId }, { $pull: { likedPosts: postId } }),
+      ]);
+    } else {
+      await Promise.all([
+        Posts.updateOne({ _id: postId }, { $addToSet: { likedBy: userId } }),
+        Users.updateOne({ _id: userId }, { $addToSet: { likedPosts: postId } }),
+      ]);
+    }
+
+    const updated = await Posts.findById(postId).select("likes");
+    res.status(200).json(updated.likes); // return the new likes array
+  } catch (error) {
+    console.error("error in likeUnlikePost", error);
     res.status(500).json({ message: "internal server error" });
   }
 }

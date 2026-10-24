@@ -8,6 +8,7 @@ import {
   createPostReplay,
   getPostReplay,
   updatePost,
+  likeUnlikePost,
   getPostByUser,
 } from "../controllers/PostController.js";
 import upload from "../middlewares/upload.js";
@@ -15,6 +16,7 @@ import upload from "../middlewares/upload.js";
 const router = express.Router();
 
 router.post("/",verifyToken, upload.single("PostImage"), createPost);
+router.post("/like/:id",verifyToken,likeUnlikePost);
 router.put("/uploadPostImage",verifyToken, upload.single("PostImage"), updatePost);
 router.post("/replay/:id",verifyToken, upload.single("PostImage"), createPostReplay);
 router.get("/", getAllPosts);
