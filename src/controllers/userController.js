@@ -1,11 +1,12 @@
 import User from "../models/User.js";
 import hashPassword from "../middlewares/hashPassword.js";
 import jwt from "jsonwebtoken";
-import cokkieParser from "cookie-parser";
 import mongoose from "mongoose";
+import path from "path";
+import fs from "node:fs/promises";
 
-const PUBLIC_FIELDS = "userId username avatar bio createdAt";
-
+export const PUBLIC_FIELDS =
+  "userId name bio website location dob profilePic bannerPic noPosts noFollowers followers noFollowing following createdAt";
 export const getMe = (req, res) => {
   const u = req.user; // set by verifyToken
 
@@ -69,13 +70,14 @@ export async function getUserById(req, res) {
         message: `User with ID '' not found.`,
       });
     }
+    // console.log("user", { user });
     res.status(200).json(user);
   } catch (error) {
     console.error("error in getUserById", error);
     res.status(500).json({ message: "internal server error" });
   }
 }
-export async function getUsers(_, res) {
+export async function getAllUsers(_, res) {
   try {
     const user = await User.find();
     if (!user) {
@@ -160,6 +162,8 @@ export const loginUser = async (req, res) => {
   }
 };
 export async function updateUser(req, res) {
+  const uploadsDir = path.join(process.cwd(), "assets/profilesImage");
+
   // const isOwner = (req) => req.params.id === req.user._id.toString();
   try {
     // if (!isOwner(req)) {
@@ -185,7 +189,33 @@ export async function updateUser(req, res) {
       ...(profileImageUrl && { profilePic: profileImageUrl }),
       ...(bannerImageUrl && { bannerPic: bannerImageUrl }),
     };
-    // console.log(updateFields);
+    console.log(updateFields.bannerPic, updateFields.profilePic);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (updateFields.bannerPic) {
+      const filename = path.basename(user.bannerPic);
+      const filePath = path.join(uploadsDir, filename);
+
+      try {
+        await fs.unlink(filePath);
+        console.log("bannerPic deleted successfully");
+      } catch (unlinkErr) {
+        console.error("Could not delete image file:", unlinkErr.message);
+      }
+    }
+    if (updateFields.profilePic) {
+      const filename = path.basename(user.profilePic);
+      const filePath = path.join(uploadsDir, filename);
+
+      try {
+        await fs.unlink(filePath);
+        console.log("profilePic deleted successfully");
+      } catch (unlinkErr) {
+        console.error("Could not delete image file:", unlinkErr.message);
+      }
+    }
 
     const updated = await User.findByIdAndUpdate(
       req.user._id,
@@ -215,6 +245,18 @@ export async function deleteUser(req, res) {
     const DeleteUser = await User.findByIdAndDelete(req.params.id);
     if (!DeleteUser) return res.status(404).json({ message: "user not found" });
 
+    if (DeleteUser.imagePath) {
+      const filename = path.basename(DeleteUser.imagePath);
+      const filePath = path.join(uploadsDir, filename);
+
+      try {
+        await fs.unlink(filePath);
+        console.log("File deleted successfully");
+      } catch (unlinkErr) {
+        console.error("Could not delete image file:", unlinkErr.message);
+      }
+    }
+
     res.status(200).json({ message: "user deleted" });
   } catch (error) {
     console.error("error in deleteUser", error);
@@ -236,6 +278,37 @@ export async function bookmarkPosts(req, res) {
     res.status(200).json(addBookmark);
   } catch (error) {
     console.error("error in bookmark Post", error);
+    res.status(500).json({ message: "internal server error" });
+  }
+}
+export async function followUnFollowUser(req, res) {
+  try {
+    const myId = req.user.id;
+    const { Id } = req.body;
+    console.log(Id);
+    const update = { following: Id };
+    const Me = await User.findById(myId);
+    const isFollowing = Me.following.some((id) => id.toString() === Id);
+    const Follow = await User.findByIdAndUpdate(
+      myId,
+      isFollowing ? { $pull: update } : { $addToSet: update },
+      { returnDocument: "after" },
+    ).select("following");
+
+    const update2 = { followers: myId };
+    const user = await User.findById(Id);
+    const isFollowers = user.followers.some((id) => id.toString() === myId);
+    console.log("followers", isFollowers, isFollowing);
+    const followers = await User.findByIdAndUpdate(
+      Id,
+      isFollowers ? { $pull: update2 } : { $addToSet: update2 },
+      { returnDocument: "after" },
+    ).select("followers");
+    res
+      .status(200)
+      .json({ followers: followers.followers, following: Follow.following });
+  } catch (error) {
+    console.error("error in following uer", error);
     res.status(500).json({ message: "internal server error" });
   }
 }

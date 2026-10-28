@@ -167,14 +167,14 @@ export async function updatePost(req, res) {
   try {
     const postedBy = req.params.id;
     const { Description, imagePath } = req.body;
-    if (!description && !imagePath) {
+    if (!Description && !imagePath) {
       return res
         .status(400)
         .json({ message: "Post description or image is required." });
     }
     const updatePost = await Posts.findByIdAndUpdate(
       req.params.id,
-      { postedBy, description, imagePath },
+      { postedBy, Description, imagePath },
       { new: true },
     );
     res.status(200).json(updatePost);

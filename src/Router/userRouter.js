@@ -8,8 +8,9 @@ import {
   deleteUser,
   getUserById,
   bookmarkPosts,
+  followUnFollowUser,
   getUser,
-  getUsers,
+  getAllUsers,
   loginUser,
 } from "../controllers/userController.js";
 import upload from "../middlewares/upload.js";
@@ -19,10 +20,11 @@ router.get("/getMe", verifyToken, getMe);
 router.post("/register", createUser);
 router.post("/login", validateLogin, loginUser);
 router.get("/:id", getUser);
-router.get("/", getUsers);
+router.get("/", getAllUsers);
 router.get("/id/:id", getUserById);
 router.put("/bookmark/", verifyToken, bookmarkPosts);
-router.delete("/:id", verifyToken, deleteUser);
+router.put("/follow/", verifyToken, followUnFollowUser);
 router.put("/",verifyToken,upload.fields([{ name: "profilePic", maxCount: 1 },{ name: "bannerPic", maxCount: 1 },]),updateUser,);
+router.delete("/:id", verifyToken, deleteUser);
 
 export default router;
