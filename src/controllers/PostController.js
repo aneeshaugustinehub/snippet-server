@@ -1,6 +1,7 @@
 import { log } from "console";
 import Posts from "../models/Posts.js";
 import Users from "../models/User.js";
+import Notification from "../models/notification.model.js";
 import fs from "node:fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -64,7 +65,7 @@ export async function getPostReplay(req, res) {
 }
 
 export async function createPost(req, res) {
-  console.log("createPost");
+  // console.log("createPost");
   try {
     const postedBy = req.user._id;
     const { Description, PostImage } = req.body;
@@ -96,7 +97,8 @@ export async function createPost(req, res) {
 
 export async function createPostReplay(req, res) {
   const postedBy = req.user._id;
-
+  const post = await Posts.findById(req.params.id);
+  const postUser = post.postedBy
   const { replayText, replayImage } = req.body;
   // console.log("createPostReplay");
   try {
@@ -121,6 +123,14 @@ export async function createPostReplay(req, res) {
     });
     // console.log(newPost);
     await newPost.save();
+    if (req.params.id.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        from: req.user._id,
+        to: postUser,
+        type: "comment",
+        post: req.params.id,
+      });
+    }
     return res.status(200).json(newPost);
   } catch (error) {
     console.error("error in createPost", error);
@@ -129,7 +139,6 @@ export async function createPostReplay(req, res) {
 }
 export async function likeUnlikePost(req, res) {
   console.log("like");
-
   try {
     const postId = req.params.id;
     const userId = req.user._id;
@@ -156,6 +165,14 @@ export async function likeUnlikePost(req, res) {
 
     const updated = await Posts.findById(postId).select("likes");
     res.status(200).json(updated.likes); // return the new likes array
+    if (post.postedBy.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        from: req.user._id,
+        to: post.postedBy,
+        type: "like",
+        post: postId,
+      });
+    }
   } catch (error) {
     console.error("error in likeUnlikePost", error);
     res.status(500).json({ message: "internal server error" });

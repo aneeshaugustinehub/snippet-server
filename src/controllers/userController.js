@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Notification from "../models/notification.model.js"
 import hashPassword from "../middlewares/hashPassword.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -307,6 +308,15 @@ export async function followUnFollowUser(req, res) {
     res
       .status(200)
       .json({ followers: followers.followers, following: Follow.following });
+    if (Id.toString() !== myId.toString()) {
+      console.log("sent noti");
+      
+      await Notification.create({
+        from: myId,
+        to: Id,
+        type: "follow",
+      });
+    }
   } catch (error) {
     console.error("error in following uer", error);
     res.status(500).json({ message: "internal server error" });
