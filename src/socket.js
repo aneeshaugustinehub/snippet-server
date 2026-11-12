@@ -12,7 +12,7 @@ export function initSocket(httpServer) {
   io.use((socket, next) => {
     try {
       const payload = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
-      socket.userId = String(payload._id); // check the key your login signs
+      socket.userId = String(payload.id);
       next();
     } catch {
       next(new Error("unauthorized"));
