@@ -1,5 +1,5 @@
 import User from "../models/User.js";
-import Notification from "../models/notification.model.js"
+import Notification from "../models/notification.model.js";
 import hashPassword from "../middlewares/hashPassword.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -41,7 +41,7 @@ export async function getUser(req, res) {
   try {
     const id = req.params.id;
 
-    const user = await User.findOne({ userId: id }).select(PUBLIC_FIELDS); // how add in mongo db schema
+    const user = await User.findOne({ userId: id }).select(PUBLIC_FIELDS);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -80,7 +80,7 @@ export async function getUserById(req, res) {
 }
 export async function getAllUsers(_, res) {
   try {
-    const user = await User.find();
+    const user = await User.find().select(PUBLIC_FIELDS);;
     if (!user) {
       return res
         .status(404)
@@ -151,7 +151,7 @@ export const loginUser = async (req, res) => {
   const user = req.user;
   try {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "5h",
     });
     res.status(200).json({
       message: "Login successful",
@@ -186,7 +186,7 @@ export async function updateUser(req, res) {
       bio,
       location,
       website,
-      age,
+      dob: age,
       ...(profileImageUrl && { profilePic: profileImageUrl }),
       ...(bannerImageUrl && { bannerPic: bannerImageUrl }),
     };
@@ -224,7 +224,7 @@ export async function updateUser(req, res) {
       { returnDocument: "after", runValidators: true },
     ).select("-password");
 
-    if (!updateUser) {
+    if (!updated) {
       return res.status(404).json({ message: "user not found" });
     }
     res.status(200).json(updated);
@@ -237,17 +237,19 @@ export async function updateUser(req, res) {
   }
 }
 export async function deleteUser(req, res) {
+  const uploadsDir = path.join(process.cwd(), "assets/profilesImage");
+  const isOwner = (req) => req.params.id === req.user._id.toString();
   try {
     if (!isOwner(req)) {
       return res
         .status(403)
         .json({ message: "You can only delete your own account" });
     }
-    const DeleteUser = await User.findByIdAndDelete(req.params.id);
+    const DeleteUser = await User.findByIdAndDelete(req.user._id);
     if (!DeleteUser) return res.status(404).json({ message: "user not found" });
 
-    if (DeleteUser.imagePath) {
-      const filename = path.basename(DeleteUser.imagePath);
+    if (DeleteUser.profilePic) {
+      const filename = path.basename(DeleteUser.profilePic);
       const filePath = path.join(uploadsDir, filename);
 
       try {
@@ -305,18 +307,18 @@ export async function followUnFollowUser(req, res) {
       isFollowers ? { $pull: update2 } : { $addToSet: update2 },
       { returnDocument: "after" },
     ).select("followers");
-    res
-      .status(200)
-      .json({ followers: followers.followers, following: Follow.following });
     if (Id.toString() !== myId.toString()) {
       console.log("sent noti");
-      
+
       await Notification.create({
         from: myId,
         to: Id,
         type: "follow",
       });
     }
+    res
+      .status(200)
+      .json({ followers: followers.followers, following: Follow.following });
   } catch (error) {
     console.error("error in following uer", error);
     res.status(500).json({ message: "internal server error" });

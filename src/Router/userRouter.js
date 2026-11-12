@@ -16,6 +16,7 @@ import {
 import upload from "../middlewares/upload.js";
 
 const router = express.Router();
+router.get("/search", getUser);
 router.get("/getMe", verifyToken, getMe);
 router.post("/register", createUser);
 router.post("/login", validateLogin, loginUser);

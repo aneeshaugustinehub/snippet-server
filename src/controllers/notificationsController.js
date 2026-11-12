@@ -4,7 +4,7 @@ export const getNotifications = async (req, res) => {
   try {    
     const notifications = await Notification.find({ to: req.user._id })
       .sort({ createdAt: -1 })
-      .populate("from", "username profileImg");
+      .populate("from", "userId name profilePic");
 
     await Notification.updateMany(
       { to: req.user._id, read: false },

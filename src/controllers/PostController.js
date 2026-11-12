@@ -10,10 +10,10 @@ import { error } from "node:console";
 export async function getAllPosts(_, res) {
   try {
     const posts = await Posts.find().sort({ createdAt: -1 });
-    res.status(200).json({ posts });
     if (!posts) {
       res.status(404).json({ message: "Posts not available" });
     }
+    res.status(200).json({ posts });
   } catch (error) {
     console.error("error in getAllPosts", error);
     res.status(500).json({ message: "internal server error" });
@@ -23,12 +23,11 @@ export async function getPost(req, res) {
   try {
     const id = req.params.id;
     const posts = await Posts.findById(id);
-    return res.status(200).json({ posts });
     console.log(res);
-
     if (!posts) {
       return res.status(404).json({ message: "Posts not available" });
     }
+    return res.status(200).json({ posts });
   } catch (error) {
     console.error("error in getPost", error);
     return res.status(500).json({ message: "internal server error" });
@@ -97,11 +96,11 @@ export async function createPost(req, res) {
 
 export async function createPostReplay(req, res) {
   const postedBy = req.user._id;
-  const post = await Posts.findById(req.params.id);
-  const postUser = post.postedBy
+  const postUser = post.postedBy;
   const { replayText, replayImage } = req.body;
   // console.log("createPostReplay");
   try {
+    const post = await Posts.findById(req.params.id);
     // console.log(postedBy, replayText, replayImage);
     let imageUrl = "";
     if (!postedBy) {
@@ -163,8 +162,7 @@ export async function likeUnlikePost(req, res) {
       ]);
     }
 
-    const updated = await Posts.findById(postId).select("likes");
-    res.status(200).json(updated.likes); // return the new likes array
+    const updated = await Posts.findById(postId).select("likedBy");
     if (post.postedBy.toString() !== req.user._id.toString()) {
       await Notification.create({
         from: req.user._id,
@@ -173,6 +171,7 @@ export async function likeUnlikePost(req, res) {
         post: postId,
       });
     }
+    res.status(200).json(updated.likedBy); // return the new likes array
   } catch (error) {
     console.error("error in likeUnlikePost", error);
     res.status(500).json({ message: "internal server error" });
@@ -182,7 +181,13 @@ export async function likeUnlikePost(req, res) {
 export async function updatePost(req, res) {
   console.log("updatePost");
   try {
-    const postedBy = req.params.id;
+    const postId = req.params.id;
+    const postedBy = req.user._id;
+    if (postedBy.toString() !== postId.toString()) {
+      return res
+        .status(403)
+        .json({ message: "You can only update your own post" });
+    }
     const { Description, imagePath } = req.body;
     if (!Description && !imagePath) {
       return res
@@ -190,14 +195,14 @@ export async function updatePost(req, res) {
         .json({ message: "Post description or image is required." });
     }
     const updatePost = await Posts.findByIdAndUpdate(
-      req.params.id,
+      postId,
       { postedBy, Description, imagePath },
       { new: true },
     );
-    res.status(200).json(updatePost);
     if (!updatePost) {
       return res.status(404).json({ message: "Post not found" });
     }
+    res.status(200).json(updatePost);
   } catch (error) {
     console.error("error in updatePost", error);
     res.status(500).json({ message: "internal server error" });

@@ -15,6 +15,7 @@ const userSchema = new Schema(
       type: String,
       validate: {
         validator: (value) =>
+          validator.isEmpty(value) ||
           validator.isURL(value, { require_protocol: false }),
         message: "Please fill a valid URL address",
       },
@@ -23,9 +24,6 @@ const userSchema = new Schema(
     dob: { type: Date, required: true },
     profilePic: { type: String, default: "" },
     bannerPic: { type: String, default: "" },
-    noPosts: { type: Number, default: 0 },
-    noFollowers: { type: Number, default: 0 },
-    noFollowing: { type: Number, default: 0 },
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     likedPosts: [{ type: Schema.Types.ObjectId, ref: "Post", default: [] }],
